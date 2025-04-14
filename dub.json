@@ -5,5 +5,6 @@
 	"copyright": "Copyright © 2025, rillki",
 	"description": "Binary options simulation.",
 	"license": "MIT",
-	"name": "binary_options"
+	"name": "binary_options",
+	"targetPath": "bin"
 }
