@@ -27,17 +27,25 @@ struct Layout
     float open, high, low, close;
 }
 
-enum BetType: int 
+enum BetType: int
 {
-    no = 0,
-    yes = 1,
-    random = -1,
+    up = 0,      // bet price will go up
+    down = 1,    // bet price will go down
+    random = -1, // randomize what we should bet on from options above
 }
 
 struct Context
 {
-    float balance, payout;
+    // your trade balance (how much money your have in your account)
+    float balance;
+
+    // payout rate between (0, 1]
+    float payout;
+
+    // how much to bet on a trade
     int betAmount;
+
+    // what bet should be made
     BetType betAction;
 }
 
@@ -55,67 +63,78 @@ void main(string[] args)
         .readText
         .csvReader!Layout(["Date", "Open", "High", "Low", "Close"])
         .array;
-    
+
     // init
     auto context = Context(
-        balance: 100,                   // initial balance
-        payout: 1,                      // percentage payout (1 == 100%)
-        betAmount: 1,                   // bet size
-        betAction: BetType.yes,      // start buy randomly choosing yes/no
+        balance:    100,
+        payout:     1,
+        betAmount:  1,
+        betAction:  BetType.random,
     );
 
     // run backtest
-    float netProfit = 0;
-    int n_yes, n_no, n_wins, n_looses;
-    auto prev = df[0];
-    foreach (i, current; df)
+    float[string] stats = ["netProfit": 0, "betUp": 0, "betDown": 0, "wins": 0, "losses": 0];
+    foreach (price; df)
     {
-        if (!i) continue;               // skip the first row just to have something before the start of simulation
-        if (context.balance <= 0) break;// stop trading once the account is blown up
+        // stop trading once the account is blown up
+        if (context.balance <= 0) break;
 
         // bet action
-        auto action = context.betAction == BetType.random ? uniform!"[]"(0, 1).to!BetType : context.betAction;
-        auto priceDiff = current.open - prev.close;
-        if (action == BetType.yes)
+        auto bet = context.betAction == BetType.random ? uniform!"[]"(0, 1).to!BetType : context.betAction;
+        auto priceDiff = price.close - price.open;
+        if (bet == BetType.up) // we bet up, price will increase
         {
-            n_yes++;
-            if (priceDiff > 0)
+            stats["betUp"] += 1;
+            if (priceDiff > 0) // won
             {
-                n_wins++;
-                context.balance += context.payout * context.betAmount;
-                netProfit += context.payout * context.betAmount;
+                // adjust balance
+                auto payoutAmount = context.payout * context.betAmount;
+                context.balance += payoutAmount;
+
+                // adjust stats
+                stats["netProfit"] += payoutAmount;
+                stats["wins"] += 1;
             }
-            else 
+            else
             {
-                n_looses++;
-                context.balance -= context.betAmount;
-                netProfit -= context.betAmount;
+                // adjust balance
+                auto payoutAmount = context.betAmount;
+                context.balance -= payoutAmount;
+
+                // adjust stats
+                stats["netProfit"] -= payoutAmount;
+                stats["losses"] += 1;
             }
         }
-        else
+        else // we bet down, price will decrease
         {
-            n_no++;
-            if (priceDiff < 0)
+            stats["betDown"] += 1;
+            if (priceDiff < 0) // won
             {
-                n_wins++;
-                context.balance += context.payout * context.betAmount;
-                netProfit += context.payout * context.betAmount;
+                // adjust balance
+                auto payoutAmount = context.payout * context.betAmount;
+                context.balance += payoutAmount;
+
+                // adjust stats
+                stats["netProfit"] += payoutAmount;
+                stats["wins"] += 1;
             }
-            else 
+            else
             {
-                n_looses++;
-                context.balance -= context.betAmount;
-                netProfit -= context.betAmount;
+                // adjust balance
+                auto payoutAmount = context.betAmount;
+                context.balance -= payoutAmount;
+
+                // adjust stats
+                stats["netProfit"] -= payoutAmount;
+                stats["losses"] += 1;
             }
         }
 
         // log
         writefln(
-            "%12s ==> balance: %5s | net profit: %5s | n_wins: %5s | n_losses: %5s", 
-            current.date, context.balance, netProfit, n_wins, n_looses,
+            "%12s ==> bet: %5s | balance: %5s | net profit: %5s | wins: %5s | losses: %5s",
+            price.date, bet, context.balance, stats["netProfit"], stats["wins"], stats["losses"],
         );
-
-        prev = current;
     }
 }
-
