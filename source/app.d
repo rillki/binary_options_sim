@@ -71,9 +71,10 @@ void main(string[] args)
         betAmount:  1,
         betAction:  BetType.random,
     );
+    float[string] stats = ["netProfit": 0, "betUp": 0, "betDown": 0, "wins": 0, "losses": 0];
 
     // run backtest
-    float[string] stats = ["netProfit": 0, "betUp": 0, "betDown": 0, "wins": 0, "losses": 0];
+    writefln("%12s;%10s;%10s;%10s;%10s;%10s;%10s;%10s", "date", "open", "close", "bet", "balance", "netProfit", "wins", "losses");
     foreach (price; df)
     {
         // stop trading once the account is blown up
@@ -133,8 +134,8 @@ void main(string[] args)
 
         // log
         writefln(
-            "%12s ==> bet: %5s | balance: %5s | net profit: %5s | wins: %5s | losses: %5s",
-            price.date, bet, context.balance, stats["netProfit"], stats["wins"], stats["losses"],
+            "%12s;%10.1f;%10.1f;%10s;%10.1f;%10.1f;%10s;%10s",
+            price.date.to!string, price.open, price.close, bet, context.balance, stats["netProfit"], stats["wins"], stats["losses"],
         );
     }
 }
