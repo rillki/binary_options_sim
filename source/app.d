@@ -74,8 +74,14 @@ void main(string[] args)
     float[string] stats = ["netProfit": 0, "betUp": 0, "betDown": 0, "wins": 0, "losses": 0];
 
     // run backtest
-    writefln("%12s;%10s;%10s;%10s;%10s;%10s;%10s;%10s", "date", "open", "close", "bet", "balance", "netProfit", "wins", "losses");
-    foreach (price; df)
+    writefln(
+        "%5s;%12s;%10s;%10s;%10s;%10s;%7s;%10s;%10s;%10s;%10s",
+        "step", "date", "open", "close", "bet", "betAmount", "result", "balance", "netProfit", "wins", "losses"
+    );
+    bool betLost = false;
+    immutable betActionOriginal = context.betAction;
+    immutable betAmountOriginal = context.betAmount;
+    foreach (i, price; df)
     {
         // stop trading once the account is blown up
         if (context.balance <= 0) break;
@@ -95,8 +101,9 @@ void main(string[] args)
                 // adjust stats
                 stats["netProfit"] += payoutAmount;
                 stats["wins"] += 1;
+                betLost = false;
             }
-            else
+            else // lost
             {
                 // adjust balance
                 auto payoutAmount = context.betAmount;
@@ -105,6 +112,7 @@ void main(string[] args)
                 // adjust stats
                 stats["netProfit"] -= payoutAmount;
                 stats["losses"] += 1;
+                betLost = true;
             }
         }
         else // we bet down, price will decrease
@@ -119,8 +127,9 @@ void main(string[] args)
                 // adjust stats
                 stats["netProfit"] += payoutAmount;
                 stats["wins"] += 1;
+                betLost = false;
             }
-            else
+            else // lost
             {
                 // adjust balance
                 auto payoutAmount = context.betAmount;
@@ -129,13 +138,28 @@ void main(string[] args)
                 // adjust stats
                 stats["netProfit"] -= payoutAmount;
                 stats["losses"] += 1;
+                betLost = true;
             }
         }
 
         // log
         writefln(
-            "%12s;%10.1f;%10.1f;%10s;%10.1f;%10.1f;%10s;%10s",
-            price.date.to!string, price.open, price.close, bet, context.balance, stats["netProfit"], stats["wins"], stats["losses"],
+            "%5s;%12s;%10.1f;%10.1f;%10s;%10.1f;%7s;%10.1f;%10.1f;%10s;%10s",
+            i, price.date.to!string, price.open, price.close,
+            bet, context.betAmount, betLost ? "lost" : "won", context.balance,
+            stats["netProfit"], stats["wins"], stats["losses"],
         );
+
+        // martingale strategy: keep the last bet, double the last position, reset upon winning
+        if (betLost)
+        {
+            context.betAction = bet; // keep our last position
+            context.betAmount *= 2;  // double it every time we loose
+        }
+        else // reset upon winning
+        {
+            context.betAction = betActionOriginal;
+            context.betAmount = betAmountOriginal;
+        }
     }
 }
