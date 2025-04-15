@@ -21,7 +21,7 @@ dub build
 ./binary_options btcusd.csv
 ```
 
-You can try modifying the `Context` parameter values:
+You can try modifying the [`Context`](./source/app.d#L37) parameter values:
 ```d
 auto context = Context(
     balance:    100,            // initial balance
