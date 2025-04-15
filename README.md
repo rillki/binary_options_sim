@@ -9,7 +9,7 @@ You'll need D programming language compiler to run this code. Download from [her
 
 ## Run
 ```sh
-# clone this repo
+# clone this repo or download *.zip from github
 git clone https://github.com/rillki/binary_options_sim
 cd binary_options_sim
 
