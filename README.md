@@ -18,7 +18,7 @@ rdmd source/app.d btcusd.csv
 
 # or build with `dub` and run the executable
 dub build
-./binary_options btcusd.csv
+./bin/binary_options btcusd.csv
 ```
 
 You can try modifying the [`Context`](./source/app.d#L68) parameter values:
