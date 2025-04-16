@@ -71,7 +71,7 @@ void main(string[] args)
         betAmount:  1,
         betAction:  BetType.random,
     );
-    float[string] stats = ["netProfit": 0, "betUp": 0, "betDown": 0, "wins": 0, "losses": 0];
+    float[string] stats = ["netProfit": 0, "wins": 0, "losses": 0];
 
     // run backtest
     writefln(
@@ -91,7 +91,6 @@ void main(string[] args)
         auto priceDiff = price.close - price.open;
         if (bet == BetType.up) // we bet up, price will increase
         {
-            stats["betUp"] += 1;
             if (priceDiff > 0) // won
             {
                 // adjust balance
@@ -117,7 +116,6 @@ void main(string[] args)
         }
         else // we bet down, price will decrease
         {
-            stats["betDown"] += 1;
             if (priceDiff < 0) // won
             {
                 // adjust balance
